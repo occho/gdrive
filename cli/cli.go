@@ -245,7 +245,7 @@ func UploadStdin(d *gdrive.Drive, input io.ReadCloser, title string, parentId st
 	return err
 }
 
-func Upload(d *gdrive.Drive, input *os.File, title string, parentId string, share bool, mimeType string, convert bool) error {
+func Upload(d *gdrive.Drive, input *os.File, fileId string, title string, parentId string, share bool, mimeType string, convert bool) error {
 	// Grab file info
 	inputInfo, err := input.Stat()
 	if err != nil {
@@ -255,7 +255,7 @@ func Upload(d *gdrive.Drive, input *os.File, title string, parentId string, shar
 	if inputInfo.IsDir() {
 		return uploadDirectory(d, input, inputInfo, title, parentId, share, mimeType, convert)
 	} else {
-		return uploadFile(d, input, inputInfo, title, parentId, share, mimeType, convert)
+		return uploadFile(d, input, inputInfo, fileId, title, parentId, share, mimeType, convert)
 	}
 
 	return nil
@@ -301,7 +301,7 @@ func uploadDirectory(d *gdrive.Drive, input *os.File, inputInfo os.FileInfo, tit
 		if fi.IsDir() {
 			err = uploadDirectory(d, f, fi, "", folder.Id, share, mimeType, convert)
 		} else {
-			err = uploadFile(d, f, fi, "", folder.Id, share, mimeType, convert)
+			err = uploadFile(d, f, fi, "", "", folder.Id, share, mimeType, convert)
 		}
 
 		if err != nil {
@@ -312,7 +312,7 @@ func uploadDirectory(d *gdrive.Drive, input *os.File, inputInfo os.FileInfo, tit
 	return nil
 }
 
-func uploadFile(d *gdrive.Drive, input *os.File, inputInfo os.FileInfo, title string, parentId string, share bool, mimeType string, convert bool) error {
+func uploadFile(d *gdrive.Drive, input *os.File, inputInfo os.FileInfo, fileId string, title string, parentId string, share bool, mimeType string, convert bool) error {
 	if title == "" {
 		title = filepath.Base(inputInfo.Name())
 	}
@@ -334,7 +334,13 @@ func uploadFile(d *gdrive.Drive, input *os.File, inputInfo os.FileInfo, title st
 		fmt.Printf("Converting to Google Docs format enabled\n")
 	}
 
-	info, err := d.Files.Insert(f).Convert(convert).ResumableMedia(context.Background(), input, inputInfo.Size(), mimeType).Do()
+	var info *drive.File
+	var err error
+	if fileId == "" {
+		info, err = d.Files.Insert(f).Convert(convert).ResumableMedia(context.Background(), input, inputInfo.Size(), mimeType).Do()
+	} else {
+		info, err = d.Files.Update(fileId, f).Convert(convert).Media(input).Do()
+	}
 	if err != nil {
 		return fmt.Errorf("An error occurred uploading the document: %v\n", err)
 	}

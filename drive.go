@@ -48,6 +48,7 @@ type Options struct {
 		Stdin     bool     `goptions:"-s, --stdin, mutexgroup='input', obligatory, description='Use stdin as file content'"`
 		Title     string   `goptions:"-t, --title, description='Title to give uploaded file. Defaults to filename'"`
 		ParentId  string   `goptions:"-p, --parent, description='Parent Id of the file'"`
+		FileId    string   `goptions:"-u, --update, description='File Id to be updated'"`
 		Share     bool     `goptions:"--share, description='Share uploaded file'"`
 		MimeType  string   `goptions:"--mimetype, description='The MIME type (default will try to figure it out)'"`
 		Convert   bool     `goptions:"--convert, description='File will be converted to Google Docs format'"`
@@ -124,7 +125,7 @@ func main() {
 		if args.Stdin {
 			err = cli.UploadStdin(drive, os.Stdin, args.Title, args.ParentId, args.Share, args.MimeType, args.Convert)
 		} else {
-			err = cli.Upload(drive, args.File, args.Title, args.ParentId, args.Share, args.MimeType, args.Convert)
+			err = cli.Upload(drive, args.File, args.FileId, args.Title, args.ParentId, args.Share, args.MimeType, args.Convert)
 		}
 
 	case "download":
